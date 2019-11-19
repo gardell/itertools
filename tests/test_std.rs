@@ -285,6 +285,21 @@ fn join() {
 }
 
 #[test]
+fn join_result() {
+    let many_ok: Vec<Result<_, &str>> = vec![Ok(1), Ok(2), Ok(3)];
+    let one_ok: Vec<Result<_, &str>> = vec![Ok(1)];
+    let many_ok_one_err = vec![Ok(1), Err("error"), Ok(3)];
+    let one_err: Vec<Result<i32, _>> = vec![Err("error")];
+    let none: Vec<Result<i32, &str>> = vec![];
+
+    assert_eq!(many_ok.into_iter().join_result(", "), Ok("1, 2, 3".to_owned()));
+    assert_eq!(one_ok.into_iter().join_result(", "), Ok("1".to_owned()));
+    assert_eq!(many_ok_one_err.into_iter().join_result(", "), Err("error"));
+    assert_eq!(one_err.into_iter().join_result(", "), Err("error"));
+    assert_eq!(none.into_iter().join_result(", "), Ok("".to_owned()));
+}
+
+#[test]
 fn sorted_by() {
     let sc = [3, 4, 1, 2].iter().cloned().sorted_by(|&a, &b| {
         a.cmp(&b)

@@ -214,6 +214,27 @@ pub fn join<I>(iterable: I, sep: &str) -> String
     iterable.into_iter().join(sep)
 }
 
+/// Combine all iterator elements into one String, seperated by `sep`.
+///
+/// If any iterator element yield `Err`, return the first returned error.
+///
+/// `IntoIterator` enabled version of `iterable.join(sep)`.
+///
+/// ```
+/// use itertools::join_result;
+///
+/// let values: Vec<Result<_, &str>> = vec![Ok(1), Ok(2), Ok(3)];
+/// assert_eq!(join_result(values, ", "), Ok("1, 2, 3".to_owned()));
+/// assert_eq!(join_result(vec![Ok(1), Err("error"), Ok(3)], ", "), Err("error"));
+/// ```
+#[cfg(feature = "use_std")]
+pub fn join_result<I, T, E>(iterable: I, sep: &str) -> Result<String, E>
+    where I: IntoIterator<Item = Result<T, E>>,
+          T: Display
+{
+    iterable.into_iter().join_result(sep)
+}
+
 /// Sort all iterator elements into a new iterator in ascending order.
 ///
 /// `IntoIterator` enabled version of [`iterable.sorted()`][1].
