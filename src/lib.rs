@@ -1601,6 +1601,42 @@ pub trait Itertools : Iterator {
         }
     }
 
+    /// Combine all iterator elements into one String, separated by `sep`
+    ///
+    /// If any iterator element yield `Err`, return the first returned error.
+    ///
+    /// Use the `Display` implementation of each element.
+    ///
+    /// ```
+    /// use itertools::Itertools;
+    ///
+    /// let values: Vec<Result<_, &str>> = vec![Ok("a"), Ok("b"), Ok("c")];
+    /// assert_eq!(values.into_iter().join_result(", "), Ok("a, b, c".to_owned()));
+    /// let values: Vec<Result<_, &str>> = vec![Ok(1), Ok(2), Ok(3)];
+    /// assert_eq!(values.into_iter().join_result(", "), Ok("1, 2, 3".to_owned()));
+    /// assert_eq!(vec![Ok(1), Err("error"), Ok(3)].into_iter().join_result(", "), Err("error"));
+    /// ```
+    #[cfg(feature = "use_std")]
+    fn join_result<T, E>(&mut self, sep: &str) -> Result<String, E>
+        where Self::Item: Into<Result<T, E>>,
+              T: std::fmt::Display
+    {
+        Ok(match self.next().map(Into::into).transpose()? {
+            None => String::new(),
+            Some(first_elt) => {
+                // estimate lower bound of capacity needed
+                let (lower, _) = self.size_hint();
+                let mut result = String::with_capacity(sep.len() * lower);
+                write!(&mut result, "{}", first_elt).unwrap();
+                for elt in self {
+                    result.push_str(sep);
+                    write!(&mut result, "{}", elt.into()?).unwrap();
+                }
+                result
+            }
+        })
+    }
+
     /// Format all iterator elements, separated by `sep`.
     ///
     /// All elements are formatted (any formatting trait)
